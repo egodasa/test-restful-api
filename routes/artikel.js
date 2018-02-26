@@ -31,10 +31,9 @@ router.get('/:id?', checkSchema(validator.paginasi) ,asing(async(req, res, next)
 	
 	if(whereFieldTmp.length != 0){ //jika kolom where ada
 		_.each(whereFieldTmp, (v)=>{ //iterasi kolom tersebut (array) (field1)
-			whereField[v] = req.query[v] //menjadikan query url tadi menjadi object {field1 : value1}
-			whereValue.push(req.query[v]) //menambahkan value dari where ke sini untuk dimasukan ke knex.raw
+			whereField[v] = {$like : '%'+req.query[v]+'%'} //menjadikan query url tadi menjadi object {field1 : value1}, ketentuan where like %value%
 			})
-		json_query.$select.$where = whereField //tambahkan hasil object where ke base query
+		json_query.$select.$where = {$or : [whereField]} //tambahkan hasil object where ke base query
 		}
 	if(orderFieldTmp.length != 0){  //jika kolom orderby ada
 		if(orderFieldTmp instanceof Array){ //cek apakah kolom orderby satu atau lebih (array)
@@ -50,7 +49,7 @@ router.get('/:id?', checkSchema(validator.paginasi) ,asing(async(req, res, next)
 	}
 	json_query.$select.$limit = limit
 	json_query.$select.$offset = offset
-	console.log(json_query)
+	let finalQuery = sqlbuilder.build(json_query) //finalQuery.sql isi query, finalQuery.values untuk value yang aka di pass ke knex.raw(sql, value)
 	if(!error.isEmpty()){ //validasi nilai limit dan offset untuk paginasi
 		res.status(422).json({error : error.mapped()})
 		}
@@ -58,7 +57,7 @@ router.get('/:id?', checkSchema(validator.paginasi) ,asing(async(req, res, next)
 		let status;
 		let query = {
 			count : id ? db(tb).count(pk + ' as jumlah').where(pk, id) : db(tb).count(pk + ' as jumlah'),
-			select : id ? db(tb).select().where(pk, id) : db.raw(sqlbuilder.build(json_query).sql,whereValue) // hasil akhir query
+			select : id ? db(tb).select().where(pk, id) : db.raw(finalQuery.sql, finalQuery.values) // hasil akhir query
 			}
 		let row = await query.count; //Hitung total record
 		let record = await query.select; //Record yang diambil
