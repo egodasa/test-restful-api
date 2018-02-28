@@ -61,7 +61,7 @@ router.get('/:id?', checkSchema(validator.paginasi) ,asing(async(req, res, next)
 	}
 	
 	if(limit){ //jika ada limit di url
-		page = 1 //set nilai page jadi 1
+		if(!page) page = 1 //set nilai page jadi 1
 		json_query.select.$select.$limit = Number(limit) //count query tidak pakai limit dan offset
 		json_query.select.$select.$offset = Number(limit) * (page-1)
 	}else{
@@ -85,12 +85,14 @@ router.get('/:id?', checkSchema(validator.paginasi) ,asing(async(req, res, next)
 		let record = await query.select; //Record yang diambil
 		respon.data = record[0]
 		if(limit){ //jika ada limit di url
+			let fullUrl = req.protocol + '://' + req.get('host') + req.originalUrl;
+			if(!req.query.page) fullUrl = fullUrl+'&page=1'
 			respon.paginate = {} //tambahkan properti paginate pada output json
 			respon.paginate.page_count = Math.ceil(row[0][0][countAlias]/limit) //menghitung total halaman berdasarkan limit
-			respon.paginate.current_page = page //set nilai page sekarang
-			respon.paginate.next_page = page+1 <= respon.paginate.page_count ? page+1 : null //set halaman selanjutnya
-			respon.paginate.prev_page = page-1 != 0 ? page-1 : null //set halaman sebelumnya
-			}
+			respon.paginate.current_page = Number(page) //set nilai page sekarang
+			respon.paginate.next_page = page+1 <= respon.paginate.page_count ? fullUrl.replace('page='+page, 'page='+(page+1)) : null
+			respon.paginate.prev_page = page-1 != 0 ? fullUrl.replace('page='+page, 'page='+(page-1)) : null
+		}
 		row[0] == 0 ? status = 204 : status = 200; //http code 204 jika data kosong
 		res.status(status).json(respon); //hasil output json
 	}
