@@ -13,35 +13,54 @@
 */
 // This can be removed if you use __autoload() in config.php OR use Modular Extensions
 require APPPATH.'/libraries/REST_Controller.php';
-class Artikel extends REST_Controller
+class Dosen extends REST_Controller
 {
 	public function __construct()
     {
         parent::__construct();
 
         $this->load->database();
+        $this->table = "tbdosen";
+        $this->tablePk = "nidn";
+        $this->defaulSort = $this->tablePk.'|asc';
     }
     
     function index_get($id = '')
     {
-		$limit = $this->query('limit');
-		$page = $this->query('page');
-		$sort = $this->query('sort');
+		$per_page = (int)$this->query('per_page');
+		$page = (int)$this->query('page');
+		$sort = $this->query('sort') ?: $this->defaulSort;
+		if(isset($per_page) && !isset($page)) $page = 1;
+		else if(!isset($per_page) && isset($page)) $per_page = 10;
 		
-		if(isset($limit) && !isset($page)) $page = 1;
-		else if(!isset($limit) && isset($page)) $limit = 10;
-		
-		$offset = $limit * ($page - 1);
-		$data = new stdclass();
+		$offset = (int)$per_page * ((int)$page - 1);
 		$query = $this->db;
-		if(!empty($id)) $query->where('id_artikel', $id);
-		else{
-			if(!empty($sort)) {
-				$order = explode('|',$sort);
-				$query->order_by($order[0],$order[1]);
-			}
-		}
-		$data->data = $query->get('tbartikel', $limit, $offset)->result();
+		if(!empty($id)) $query->where($this->tablePk, $id);
+		
+		$data = new stdclass();
+		$data->data = $query->get($this->table, $per_page, $offset)->result();
+		$totalPage = $this->db->count_all($this->table);
+		$lastPage = ceil($totalPage/$per_page);
+		
+		$queryStringPrev = new stdclass();
+		$queryStringPrev->per_page = $per_page;
+		$queryStringPrev->page = $page;
+		$queryStringPrev->sort = $sort;
+		
+		$queryStringNext = clone $queryStringPrev;
+		
+		$queryStringNext->page = $page + 1 > $lastPage ? null : $page+1;
+		$queryStringPrev->page = $page - 1 == 0 ? null : $page-1;
+		
+		$data->pagination = new stdclass();
+		$data->pagination->next_page_url = $queryStringNext == null ? null : strtok($_SERVER["REQUEST_URI"],'?').'?'.http_build_query($queryStringNext);
+		$data->pagination->prev_page_url = $queryStringPrev == null ? null : strtok($_SERVER["REQUEST_URI"],'?').'?'.http_build_query($queryStringPrev);
+		$data->pagination->total = $totalPage;
+		$data->pagination->per_page = $per_page;
+		$data->pagination->current_page = $page;
+		$data->pagination->from = ($page-1)*$per_page;
+		$data->pagination->to = $page*$per_page;
+		$data->pagination->last_page = $lastPage;
 		$this->response($data, 200); // 200 being the HTTP response code
     }
     
