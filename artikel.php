@@ -18,7 +18,6 @@ class Dosen extends REST_Controller
 	public function __construct()
     {
         parent::__construct();
-
         $this->load->database();
         $this->table = "tbdosen";
         $this->tablePk = "nidn";
@@ -29,13 +28,22 @@ class Dosen extends REST_Controller
 		$per_page = $this->query('per_page');
 		$page = $this->query('page');
 		$sort = $this->query('sort');
+		$search = $this->query('search');
 		$data = new stdclass();
 		$data->pagination = new stdclass();
 		
-		$query = $this->db;
-		
-		$totalPage = $this->db->count_all($this->table);
-		$data->pagination->total = $totalPage;
+		$query = $this->db->select();
+		if(isset($search)) {
+			$searchTmp = explode('|', $search);
+			$query->like($searchTmp[0], $searchTmp[1]);
+		}		
+		$data->pagination->next_page_url = null;
+		$data->pagination->prev_page_url = null;
+		$data->pagination->per_page = null;
+		$data->pagination->current_page = 1;
+		$data->pagination->from = null;
+		$data->pagination->to = null;
+		$data->pagination->last_page = null;
 		
 		if(!empty($id)){
 			$data->data = $query->where($this->tablePk, $id)->get($this->table)->result();
@@ -44,20 +52,30 @@ class Dosen extends REST_Controller
 					$sortTmp = explode('|', $sort);
 					$sortType = substr($sortTmp[1],0,4);
 					$query->order_by($sortTmp[0], $sortType);
-				}
+				}			
 			if(!isset($per_page) && !isset($page)){
-				$data->data = $query->get($this->table);
+				$data->data = $query->get($this->table)->result();
 			}else{
-				if(isset($per_page) && !isset($page)) $page = 1;
-				else if(!isset($per_page) && isset($page)) $per_page = 10;
+				if(isset($per_page) && !isset($page)) {
+					$page = 1;
+					$per_page = (int)$per_page;
+				}
+				else if(!isset($per_page) && isset($page)){
+					$per_page = 10;
+					$page = (int)$page;
+				}
+				
 				$offset = (int)$per_page * ((int)$page - 1);
 				$data->data = $query->get($this->table, $per_page, $offset)->result();
+				$totalPage = $query->count_all_results($this->table, FALSE);
+				$data->pagination->total = $totalPage;
 				$lastPage = ceil($totalPage/$per_page);
 			
 				$queryStringPrev = new stdclass();
 				$queryStringPrev->per_page = $per_page;
 				$queryStringPrev->page = $page;
 				$queryStringPrev->sort = $sort;
+				$queryStringPrev->search = $search;
 				
 				$queryStringNext = clone $queryStringPrev;
 				
@@ -78,16 +96,7 @@ class Dosen extends REST_Controller
     
     function index_post()
     {
-		$v = $this->_post_args;
-		$cek = $this->db->select($this->tablePk)->from($this->table)->where($this->tablePk, $v['nidn'])->result();
-		if(count($cek) != 0) {
-			$error = new stdclass();
-			$error->error = "NIDN sudah ada";
-			$this->response($error, 409);
-		}else {
-			$this->db->insert($this->table, $v);
-			$this->response(200);
-		}
+		
     }
     
     public function index_put()
