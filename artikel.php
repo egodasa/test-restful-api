@@ -22,68 +22,72 @@ class Dosen extends REST_Controller
         $this->load->database();
         $this->table = "tbdosen";
         $this->tablePk = "nidn";
-        $this->defaulSort = $this->tablePk.'|asc';
     }
     
     function index_get($id = '')
     {
-		$per_page = (int)$this->query('per_page');
-		$page = (int)$this->query('page');
-		$sort = $this->query('sort') ?: $this->defaulSort;
-		if(isset($per_page) && !isset($page)) $page = 1;
-		else if(!isset($per_page) && isset($page)) $per_page = 10;
-		
-		$offset = (int)$per_page * ((int)$page - 1);
-		$query = $this->db;
-		if(!empty($id)) $query->where($this->tablePk, $id);
-		
+		$per_page = $this->query('per_page');
+		$page = $this->query('page');
+		$sort = $this->query('sort');
 		$data = new stdclass();
-		$data->data = $query->get($this->table, $per_page, $offset)->result();
-		$totalPage = $this->db->count_all($this->table);
-		$lastPage = ceil($totalPage/$per_page);
-		
-		$queryStringPrev = new stdclass();
-		$queryStringPrev->per_page = $per_page;
-		$queryStringPrev->page = $page;
-		$queryStringPrev->sort = $sort;
-		
-		$queryStringNext = clone $queryStringPrev;
-		
-		$queryStringNext->page = $page + 1 > $lastPage ? null : $page+1;
-		$queryStringPrev->page = $page - 1 == 0 ? null : $page-1;
-		
 		$data->pagination = new stdclass();
-		$data->pagination->next_page_url = $queryStringNext == null ? null : strtok($_SERVER["REQUEST_URI"],'?').'?'.http_build_query($queryStringNext);
-		$data->pagination->prev_page_url = $queryStringPrev == null ? null : strtok($_SERVER["REQUEST_URI"],'?').'?'.http_build_query($queryStringPrev);
+		
+		$query = $this->db;
+		
+		$totalPage = $this->db->count_all($this->table);
 		$data->pagination->total = $totalPage;
-		$data->pagination->per_page = $per_page;
-		$data->pagination->current_page = $page;
-		$data->pagination->from = ($page-1)*$per_page;
-		$data->pagination->to = $page*$per_page;
-		$data->pagination->last_page = $lastPage;
-		$this->response($data, 200); // 200 being the HTTP response code
+		
+		if(!empty($id)){
+			$data->data = $query->where($this->tablePk, $id)->get($this->table)->result();
+		}else{
+			if(isset($sort)) {
+					$sortTmp = explode('|', $sort);
+					$sortType = substr($sortTmp[1],0,4);
+					$query->order_by($sortTmp[0], $sortType);
+				}
+			if(!isset($per_page) && !isset($page)){
+				$data->data = $query->get($this->table);
+			}else{
+				if(isset($per_page) && !isset($page)) $page = 1;
+				else if(!isset($per_page) && isset($page)) $per_page = 10;
+				$offset = (int)$per_page * ((int)$page - 1);
+				$data->data = $query->get($this->table, $per_page, $offset)->result();
+				$lastPage = ceil($totalPage/$per_page);
+			
+				$queryStringPrev = new stdclass();
+				$queryStringPrev->per_page = $per_page;
+				$queryStringPrev->page = $page;
+				$queryStringPrev->sort = $sort;
+				
+				$queryStringNext = clone $queryStringPrev;
+				
+				$queryStringNext->page = $page + 1 > $lastPage ? null : $page+1;
+				$queryStringPrev->page = $page - 1 == 0 ? null : $page-1;
+				
+				$data->pagination->next_page_url = $queryStringNext == null ? null : strtok($_SERVER["REQUEST_URI"],'?').'?'.http_build_query($queryStringNext);
+				$data->pagination->prev_page_url = $queryStringPrev == null ? null : strtok($_SERVER["REQUEST_URI"],'?').'?'.http_build_query($queryStringPrev);
+				$data->pagination->per_page = $per_page;
+				$data->pagination->current_page = $page;
+				$data->pagination->from = ($page-1)*$per_page;
+				$data->pagination->to = $page*$per_page;
+				$data->pagination->last_page = $lastPage;
+			}
+		}
+		$this->response($data, 200);
     }
     
     function index_post()
     {
-		$data = $this->_post_args;
-		try {
-			//$id = $this->widgets_model->createWidget($data);
-			$id = 3; // test code
-			//throw new Exception('Invalid request data', 400); // test code
-			//throw new Exception('Widget already exists', 409); // test code
-		} catch (Exception $e) {
-			// Here the model can throw exceptions like the following:
-			// * For invalid input data: new Exception('Invalid request data', 400)
-			// * For a conflict when attempting to create, like a resubmit: new Exception('Widget already exists', 409)
-			$this->response(array('error' => $e->getMessage()), $e->getCode());
+		$v = $this->_post_args;
+		$cek = $this->db->select($this->tablePk)->from($this->table)->where($this->tablePk, $v['nidn'])->result();
+		if(count($cek) != 0) {
+			$error = new stdclass();
+			$error->error = "NIDN sudah ada";
+			$this->response($error, 409);
+		}else {
+			$this->db->insert($this->table, $v);
+			$this->response(200);
 		}
-		if ($id) {
-			$widget = array('id' => $id, 'name' => $data['name']); // test code
-			//$widget = $this->widgets_model->getWidget($id);
-			$this->response($widget, 201); // 201 being the HTTP response code
-		} else
-			$this->response(array('error' => 'Widget could not be created'), 404);
     }
     
     public function index_put()
