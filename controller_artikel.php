@@ -25,8 +25,28 @@ class Vueci extends CI_Controller {
 		$data['app']->data = new stdclass();
 		$data['app']->name = 'vueci';
 		$data['app']->data->base_url = "http://localhost/api/dosen";
-		$data['app']->data->columns = json_decode('[{"name": "nm_dosen", "title": "Nama Dosen"},
-			{"name": "nidn", "title": "NIDN"}]');
+		$data['app']->data->columns = [
+			["name"=> "nm_dosen","title"=>"Nama Dosen"],
+			["name"=> "nidn","title"=>"NIDN"]];
+		
+		$data['app']->data->table = new stdclass();
+		$data['app']->data->table->tableClass = 'table table-striped table-bordered';
+		$data['app']->data->table->ascendingIcon = 'glyphicon glyphicon-chevron-up';
+		$data['app']->data->table->descendingIcon = 'glyphicon glyphicon-chevron-down';
+		$data['app']->data->table->handleIcon = 'glyphicon glyphicon-menu-hamburger';
+
+		$data['app']->data->pagination = new stdclass();
+		$data['app']->data->pagination->wrapperClass = "pagination pull-right";
+		$data['app']->data->pagination->activeClass = "btn-primary";
+		$data['app']->data->pagination->disabledClass = "disabled";
+		$data['app']->data->pagination->pageClass = "btn btn-border";
+		$data['app']->data->pagination->linkClass = "btn btn-border";
+		$data['app']->data->pagination->icons = [
+				      'first'=> "",
+				      'prev'=> "",
+				      'next'=> "",
+				      'last'=> ""];
+		
 		$this->load->view('vueci', $data);
 	}
 	public function tabel(){
