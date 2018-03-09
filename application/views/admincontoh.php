@@ -21,7 +21,9 @@ include "template/sidebar.php";
 				<!-- /.box -->
 				<div class="box">
 					<div class="box-header">
-						<button type="button" class="btn btn-primary" @click="toggleFormModal">Data Baru</button>
+						<button type="button" class="btn btn-primary btn-sm" @click="toggleFormModal">
+							<span class="glyphicon glyphicon-plus"></span> Data Baru
+						</button>
 						<div class="modal fade in" id="formDosen" :style="formModal.style">
 				          <div class="modal-dialog">
 				            <div class="modal-content">
@@ -63,13 +65,13 @@ include "template/sidebar.php";
 						<div class="dataTables_wrapper form-inline dt-bootstrap">
 							<div class="row">
 								<div class="col-sm-6">
-									<div class="dataTables_length" id="example1_length"><label>Show 
+									<div class="dataTables_length" id="example1_length"><label>Tampilkan
 									<select name="example1_length" aria-controls="example1" class="form-control input-sm" v-model="perPage">
 										<option value="10">10</option>
 										<option value="25">25</option>
 										<option value="50">50</option>
 										<option value="100">100</option>
-									</select> entries</label>
+									</select> data</label>
 									</div>
 								</div>
 								<div class="col-sm-6">
@@ -92,12 +94,12 @@ include "template/sidebar.php";
 							</div>
 							<div class="row">
 								<div class="col-sm-12">
-									<vuetable ref="vuetable" :reactive-api-url.Boolean="true" :sort-order="sortDefault" :fields="columns" :pagination-path="paginationPath" :api-url="url" @vuetable:pagination-data="onPaginationData" :css="table" :per-page="perPage">
+									<vuetable ref="vuetable" track-by="tablePk" table-height="450" :reactive-api-url.Boolean="true" :sort-order="sortDefault" :fields="columns" :pagination-path="paginationPath" :api-url="url" @vuetable:pagination-data="onPaginationData" :css="table" :per-page="perPage" :append-params="appendParams">
 										<template slot="aksi" scope="props">
 											<button data-toggle="tooltip_hapus" title="Hapus Data" @click="deleteDosen(props.rowData.nidn)" type="button" class="btn btn-default btn-xs">
 												<span class="glyphicon glyphicon-remove"></span>
 											</button>
-											<button data-toggle="tooltip_edit" title="Ubah Data" @click="deleteDosen(props.rowData.nidn)" type="button" class="btn btn-default btn-xs">
+											<button data-toggle="tooltip_edit" title="Ubah Data" @click="getDetailDosen(props.rowData.nidn)" type="button" class="btn btn-default btn-xs">
 												<span class="glyphicon glyphicon-pencil"></span>
 											</button>
 										</template>
@@ -139,6 +141,7 @@ include "template/sidebar.php";
 			},
 			data() {
 				return {
+					tablePk : 'nidn',
 					base_url : "http://localhost/api/dosen",
 					url : "http://localhost/api/dosen",
 					url_search : "http://localhost/api/cari/dosen",
@@ -168,6 +171,7 @@ include "template/sidebar.php";
 						    'last':"glyphicon glyphicon-fast-forward"
 						}
 					},
+					appendParams : {},
 					paginationPath : "pagination",
 					sortDefault : [
 						{field : "nm_dosen", direction:'asc'}
@@ -213,13 +217,16 @@ include "template/sidebar.php";
 			},
 			methods: {
 				resetForm(){
-					this.modal.nidn = ''
-					this.modal.nm_dosen = ''
+					this.model.nidn = ''
+					this.model.nm_dosen = ''
+					if(this.formModal.currentType == 'update') this.schema.fields[0].disabled = true
+					else this.schema.fields[0].disabled = false
 				},
 				onValidated(isValid, errors) {
 				   console.log("Validation result: ", isValid, ", Errors:", errors);
 				},
 				toggleFormModal (){
+					this.resetForm()
 					this.formModal.status = !this.formModal.status
 					this.formModal.status ? this.formModal.style = 'display:block;' : this.formModal.style = 'display:none;'
 				},
@@ -231,19 +238,26 @@ include "template/sidebar.php";
 					this.$refs.paginationInfo.setPaginationData(paginationData)
 				},
 				onSearch(x) {
-					this.url = this.url_search+'/'+x
+					this.appendParams.search = x
+					this.$refs.vuetable.refresh()
 				},
 				onResetSearch(x) {
-					this.url = this.base_url
+					this.appendParams.search = undefined
 					this.search = ''
+					this.$refs.vuetable.refresh()
 				},
 				saveDosen(x, tipe = this.formModal.currentType){
 					let method = 'post'
 					let url = this.base_url
-					axios.post('http://localhost/api/dosen', x)
+					if(tipe == 'update'){
+						method = 'put'
+						url = 'http://localhost/api/dosen/'+x[this.tablePk]
+					}
+					axios[method](url, x)
 						.then(res=>{
 							this.formModal.pesan = ''
 							this.$refs.vuetable.refresh()
+							this.formModal.currentType = 'create'
 							this.toggleFormModal()
 						})
 						.catch(err=>{
@@ -260,6 +274,18 @@ include "template/sidebar.php";
 								
 							})
 					}
+				},
+				getDetailDosen(x){
+					axios.get('http://localhost/api/dosen/'+x)
+						.then(res=>{
+							this.formModal.currentType = 'update'
+							this.toggleFormModal()
+							this.$set(this.model, 'nidn', res.data.data[0].nidn)
+							this.$set(this.model, 'nm_dosen', res.data.data[0].nm_dosen)
+						})
+						.catch(err=>{
+							console.log(err)
+						})
 				}
 			},
 			watch: {
