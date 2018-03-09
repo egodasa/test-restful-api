@@ -24,9 +24,10 @@ include "template/sidebar.php";
 					<!--START OF VUE-->
 					<div class="box-body">
 						<div id="<?php echo $app->name; ?>">
-							<form>
+							<form @submit.prevent="saveDosen(model)">
 							<vue-form-generator :schema="schema" :model="model" :options="formOptions"></vue-form-generator>
-							<button type="button" @click="console.log(model)">Cek</button>
+							<button type="submit" class="btn btn-primary">Simpan</button>
+							<button type="reset" class="btn btn-success">Reset</button>
 							</form>
 						</div>
 					</div>
@@ -48,45 +49,38 @@ include "template/sidebar.php";
 			data() {
 				return {
 					model : {
-						nohp : "",
-						skill : [],
-						jenis_kelamin : ""
+						nidn : null,
+						nm_dosen : null
 					},
 					schema : {
 						fields : [
 							{
 								type : "input",
-								label : "NOHP",
+								label : "NIDN",
 								inputType : "text",
-								model : "nohp"
+								model : "nidn"
 							},
 							{
-								type : "radios",
-								label : "Skill",
-								model : "skill",
-								values : [
-									{value : 1, name : "VueJS"},
-									{value : 2, name : "AngularJS"},
-									{value : 3, name : "NodeJS"},
-									{value : 4, name : "ReactJS"},
-									{value : 5, name : "PHP"},
-									{value : 6, name : "Laravel"},
-									{value : 7, name : "Codeigniter"},
-									{value : 8, name : "Symfony"}
-								]
-							},
-							{
-								type : "select",
-								label : "Jenis Kelamin",
-								model : "jenis_kelamin",
-								values : [
-									{id : 1, name : "Laki-laki"},
-									{id : 2, name : "Perempuan"}
-								]
+								type : "input",
+								label : "Nama Dosen",
+								inputType : "text",
+								model : "nm_dosen"
 							}
 						]
 					},
 					formOptions : {}
+				}
+			},
+			methods : {
+				saveDosen(x){
+					axios.post('http://localhost/api/dosen', x)
+						.then(res=>{
+							console.log('Berhasil')
+							window.location = 'http://localhost/api/vueci/tabel'
+						})
+						.catch(err=>{
+							console.log('Gagal')
+						})
 				}
 			}
 		})

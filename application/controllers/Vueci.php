@@ -81,8 +81,9 @@ class Vueci extends CI_Controller {
 		$data['app']->data->paginationPath = "pagination";
 		$data['app']->data->sortDefault = [["field"=>"nm_dosen","direction"=>"asc"]];
 		$data['app']->data->perPage = 10;
-		$data['app']->data->search = '';
 		
+		$data['app']->data->search = '';
+		$data['app']->data->form = false;
 		$data['menu'] = $this->menu;
 		$this->load->view('admincontoh', $data);
 	}
