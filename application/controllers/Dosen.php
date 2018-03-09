@@ -86,7 +86,7 @@ class Dosen extends REST_Controller
 				$data->pagination->prev_page_url = $queryStringPrev->page == null ? null : strtok($_SERVER["REQUEST_URI"],'?').'?'.http_build_query($queryStringPrev);
 				$data->pagination->per_page = (int)$per_page;
 				$data->pagination->current_page = (int)$page;
-				$data->pagination->from = ($page-1)*$per_page;
+				$data->pagination->from = (($page-1)*$per_page)+1;
 				$data->pagination->to = $page*$per_page;
 				$data->pagination->last_page = $lastPage;
 			}
@@ -96,58 +96,27 @@ class Dosen extends REST_Controller
     
     function index_post()
     {
-		
+		$data = $this->_post_args;
+		if($this->db->insert($this->table, $data)) $this->response(200);
+		else $this->response(500);
     }
     
-    public function index_put()
+    public function index_put($id)
     {
 		$data = $this->_put_args;
-		try {
-			//$id = $this->widgets_model->updateWidget($data);
-			$id = $data['id']; // test code
-			//throw new Exception('Invalid request data', 400); // test code
-		} catch (Exception $e) {
-			// Here the model can throw exceptions like the following:
-			// * For invalid input data: new Exception('Invalid request data', 400)
-			// * For a conflict when attempting to create, like a resubmit: new Exception('Widget already exists', 409)
-			$this->response(array('error' => $e->getMessage()), $e->getCode());
-		}
-		if ($id) {
-			$widget = array('id' => $data['id'], 'name' => $data['name']); // test code
-			//$widget = $this->widgets_model->getWidget($id);
-			$this->response($widget, 200); // 200 being the HTTP response code
-		} else
-			$this->response(array('error' => 'Widget could not be found'), 404);
+		$dataTmp = [
+			"nm_dosen"=>$data['nm_dosen']
+		];
+		if($this->db->where($this->tablePk, $id)->update($this->table, $data)) $this->response(200);
+		else $this->response(500);
     }
         
-    function index_delete($id = '')
+    function index_delete($id)
     {
-    	
-    	// Example data for testing.
-    	$widgets = array(
-    			1 => array('id' => 1, 'name' => 'sprocket'),
-    			2 => array('id' => 2, 'name' => 'gear'),
-    			3 => array('id' => 3, 'name' => 'nut')
-    	);
-    	
-    	if (!$id) { $id = $this->get('id'); }
-    	if (!$id)
-    	{
-    		$this->response(array('error' => 'An ID must be supplied to delete a widget'), 400);
-    	}
-        //$widget = $this->widgets_model->getWidget($id);
-    	$widget = @$widgets[$id]; // test code
-    	if($widget) {
-    		try {
-    			//$this->widgets_model->deleteWidget($id);
-    			//throw new Exception('Forbidden', 403); // test code
-    		} catch (Exception $e) {
-    			// Here the model can throw exceptions like the following:
-    			// * Client is not authorized: new Exception('Forbidden', 403)
-    			$this->response(array('error' => $e->getMessage()), $e->getCode());
-    		}
-    		$this->response($widget, 200); // 200 being the HTTP response code
-    	} else
-    		$this->response(array('error' => 'Widget could not be found'), 404);
+    	$delete = [
+			$this->tablePk => $id
+    	];
+    	if($this->db->delete($this->table, $delete)) $this->response(200);
+		else $this->response(500);
     }
 }
