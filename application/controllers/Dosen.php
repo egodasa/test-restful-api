@@ -33,10 +33,16 @@ class Dosen extends REST_Controller
 		$data = new stdclass();
 		$data->pagination = new stdclass();
 		
-		$query = $this->db->select();
 		if(isset($search) || !empty($search)) {
-			$this->db->where('MATCH ('.$this->fullTextSearch.') AGAINST ("'.$search.'")', NULL, FALSE);
+			$query = $this->db->select()->where('MATCH ('.$this->fullTextSearch.') AGAINST ("'.$search.'")', NULL, FALSE);
 		}
+		else {
+			$query = $this->db->select();
+		}
+		$queryCount = clone $query; // Clone query sql untuk dipakai menghitung jumlah record
+		$totalPage = count($queryCount->get($this->table)->result());
+		
+		$data->pagination->total = $totalPage;
 		$data->pagination->next_page_url = null;
 		$data->pagination->prev_page_url = null;
 		$data->pagination->per_page = null;
@@ -47,12 +53,13 @@ class Dosen extends REST_Controller
 		
 		if(!empty($id)){
 			$data->data = $query->where($this->tablePk, $id)->get($this->table)->result();
-		}else{
+		}else{			
 			if(isset($sort)) {
 					$sortTmp = explode('|', $sort);
 					$sortType = substr($sortTmp[1],0,4);
 					$query->order_by($sortTmp[0], $sortType);
-				}			
+				}
+				
 			if(!isset($per_page) && !isset($page)){
 				$data->data = $query->get($this->table)->result();
 			}else{
@@ -64,10 +71,8 @@ class Dosen extends REST_Controller
 					$per_page = 10;
 					$page = (int)$page;
 				}
-				
 				$offset = (int)$per_page * ((int)$page - 1);
 				$data->data = $query->get($this->table, $per_page, $offset)->result();
-				$totalPage = $query->count_all_results($this->table, FALSE);
 				$data->pagination->total = $totalPage;
 				$lastPage = ceil($totalPage/$per_page);
 			
