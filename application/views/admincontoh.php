@@ -92,12 +92,23 @@ include "template/sidebar.php";
 							</div>
 							<div class="row">
 								<div class="col-sm-12">
-									<vuetable ref="vuetable" :reactive-api-url.Boolean="true" :sort-order="sortDefault" :fields="columns" :pagination-path="paginationPath" :api-url="url" @vuetable:pagination-data="onPaginationData" :css="table" :per-page="perPage"></vuetable>
+									<vuetable ref="vuetable" :reactive-api-url.Boolean="true" :sort-order="sortDefault" :fields="columns" :pagination-path="paginationPath" :api-url="url" @vuetable:pagination-data="onPaginationData" :css="table" :per-page="perPage">
+										<template slot="aksi" scope="props">
+											<button data-toggle="tooltip_hapus" title="Hapus Data" @click="deleteDosen(props.rowData.nidn)" type="button" class="btn btn-default btn-xs">
+												<span class="glyphicon glyphicon-remove"></span>
+											</button>
+											<button data-toggle="tooltip_edit" title="Ubah Data" @click="deleteDosen(props.rowData.nidn)" type="button" class="btn btn-default btn-xs">
+												<span class="glyphicon glyphicon-pencil"></span>
+											</button>
+										</template>
+									</vuetable>
 								</div>
 							</div>
 							<div class="row">
 								<div class="col-sm-5">
-									<div class="dataTables_info" id="example1_info" role="status" aria-live="polite">Showing 11 to 20 of 57 entries</div>
+									<div class="dataTables_info" id="example1_info" role="status" aria-live="polite">
+										<vuetable-pagination-info ref="paginationInfo"></vuetable-pagination-info>
+									</div>
 								</div>
 								<div class="col-sm-7">
 									<div class="dataTables_paginate paging_simple_numbers" id="example1_paginate">
@@ -134,7 +145,8 @@ include "template/sidebar.php";
 					columns : [
 						{name: "__sequence", title:"No"},
 						{name: "nm_dosen", title:"Nama Dosen", sortField : "nm_dosen"},
-						{name: "nidn", title:"NIDN", sortField : "nidn"}
+						{name: "nidn", title:"NIDN", sortField : "nidn"},
+						{name: "__slot:aksi", title:"Aksi"}
 					],
 					table : {
 						tableClass : 'table table-bordered table-striped dataTable',
@@ -194,7 +206,8 @@ include "template/sidebar.php";
 						status : false,
 						style : null,
 						pesan : null,
-						isCreateMode : true
+						isCreateMode : true,
+						currentType : 'create'
 					},
 				}
 			},
@@ -215,6 +228,7 @@ include "template/sidebar.php";
 				},
 				onPaginationData(paginationData) {
 					this.$refs.pagination.setPaginationData(paginationData)
+					this.$refs.paginationInfo.setPaginationData(paginationData)
 				},
 				onSearch(x) {
 					this.url = this.url_search+'/'+x
@@ -223,7 +237,9 @@ include "template/sidebar.php";
 					this.url = this.base_url
 					this.search = ''
 				},
-				saveDosen(x){
+				saveDosen(x, tipe = this.formModal.currentType){
+					let method = 'post'
+					let url = this.base_url
 					axios.post('http://localhost/api/dosen', x)
 						.then(res=>{
 							this.formModal.pesan = ''
@@ -233,6 +249,17 @@ include "template/sidebar.php";
 						.catch(err=>{
 							this.formModal.pesan = "Telah terjadi kesalahan pada server. Silahkan coba lagi nanti."
 						})
+				},
+				deleteDosen(x){
+					if(window.confirm('Hapus data dengan NIDN = '+x+' ?')){
+						axios.delete('http://localhost/api/dosen/'+x)
+							.then(res=>{
+								this.$refs.vuetable.refresh()
+							})
+							.catch(err=>{
+								
+							})
+					}
 				}
 			},
 			watch: {
