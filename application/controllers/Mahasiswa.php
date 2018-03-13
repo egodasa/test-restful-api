@@ -13,16 +13,42 @@
 */
 // This can be removed if you use __autoload() in config.php OR use Modular Extensions
 require APPPATH.'/libraries/REST_Controller.php';
-class Dosen extends REST_Controller
+class Mahasiswa extends REST_Controller
 {
 	public function __construct()
     {
         parent::__construct();
         $this->load->database();
-        $this->table = "tbdosen";
-        $this->tablePk = "nidn";
-        $this->fullTextSearch = 'nidn,nm_dosen';
+        $this->table = "tbmahasiswa";
+        $this->tablePk = "nobp";
+        $this->fullTextSearch = 'nobp,nm_mahasiswa';
         $this->load->library('form_validation');
+        $this->validationRules = [
+			"queryString" => [
+				[
+					[
+						"field" => "per_page",
+						"label" => "Per Page",
+						"rules" => "is_natural"
+					],
+					[
+						"field" => "page",
+						"label" => "Page",
+						"rules" => "is_natural"
+					],
+					[
+						"field" => "sort",
+						"label" => "Sort",
+						"rules" => "regex_match[/[a-zA-Z0-9]{0,20}\|(asc|desc)/]"
+					],
+					[
+						"field" => "search",
+						"label" => "Search",
+						"rules" => "max_length[150]"
+					]
+				]
+			]
+        ];
     }
     
     function index_get($id = '')
@@ -129,8 +155,8 @@ class Dosen extends REST_Controller
 		];
 		$formValidation = $this->form_validation;
 		$formValidation->set_data($data);
-		$formValidation->set_rules('nidn','NOBP','required|max_length[15]|min_length[14]');
-		$formValidation->set_rules('nm_dosen','Nama Dosen','required|max_length[150]');
+		$formValidation->set_rules('nobp','NOBP','required|max_length[15]|min_length[14]');
+		$formValidation->set_rules('nm_mahasiswa','Nama Mahasiswa','required|max_length[150]');
 		if($formValidation->run() == FALSE){
 			$res['status_code'] = 422;
 			$res['errors'] = $formValidation->error_array();
@@ -152,11 +178,11 @@ class Dosen extends REST_Controller
 		];
 		$data = $this->_put_args;
 		$dataTmp = [
-			"nm_dosen"=>$data['nm_dosen']
+			"nm_mahasiswa"=>$data['nm_mahasiswa']
 		];
 		$formValidation = $this->form_validation;
 		$formValidation->set_data($dataTmp);
-		$formValidation->set_rules('nm_dosen','Nama Dosen','required|max_length[150]');
+		$formValidation->set_rules('nm_mahasiswa','Nama Mahasiswa','required|max_length[150]');
 		if($formValidation->run() == FALSE){
 			$res['status_code'] = 422;
 			$res['errors'] = $formValidation->error_array();
