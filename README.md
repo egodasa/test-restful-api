@@ -8,7 +8,7 @@ I'm using <a href="https://github.com/chriskacerguis/codeigniter-restserver">cod
 You can see the example at controllers/Dosen.php
 
 # Example
-Access localhost/api/mahasiswa and the response will be :
+Access <b>http://localhost/api/dosen?per_page=5&page=2&sort=nidn|desc</b> and the response will be :
 
 ```javascript
 {
