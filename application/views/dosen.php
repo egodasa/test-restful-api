@@ -10,7 +10,7 @@ include "components/fieldInputBS.php";
 	<!-- Content Header (Page header) -->
 	<section class="content-header">
 		<h1>
-			Data Tables
+			Data Tablesaaw
 			<small>advanced tables</small>
 		</h1>
 	</section>
@@ -135,10 +135,6 @@ include "components/fieldInputBS.php";
 <?php
 require "template/mixin.php";
 ?>
-Vue.component('fieldInputbs',{
-	template : '#fieldInputBS',
-	mixins : [VueFormGenerator.abstractField]
-})
 Vue.use(Vuetable);
 new Vue({
 	el: '#<?php echo $app->name; ?>',

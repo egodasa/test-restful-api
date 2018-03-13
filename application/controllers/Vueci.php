@@ -68,4 +68,8 @@ class Vueci extends CI_Controller {
 		$data['menu'] = $this->menu;
 		$this->load->view('mahasiswa', $data);
 	}
+	public function contohvue()
+	{
+		$this->load->view('contohvue');
+	}
 }

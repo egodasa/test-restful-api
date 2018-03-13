@@ -23,6 +23,32 @@ class Mahasiswa extends REST_Controller
         $this->tablePk = "nobp";
         $this->fullTextSearch = 'nobp,nm_mahasiswa';
         $this->load->library('form_validation');
+        $this->validationRules = [
+			"queryString" => [
+				[
+					[
+						"field" => "per_page",
+						"label" => "Per Page",
+						"rules" => "is_natural"
+					],
+					[
+						"field" => "page",
+						"label" => "Page",
+						"rules" => "is_natural"
+					],
+					[
+						"field" => "sort",
+						"label" => "Sort",
+						"rules" => "regex_match[/[a-zA-Z0-9]{0,20}\|(asc|desc)/]"
+					],
+					[
+						"field" => "search",
+						"label" => "Search",
+						"rules" => "max_length[150]"
+					]
+				]
+			]
+        ];
     }
     
     function index_get($id = '')
@@ -146,12 +172,28 @@ class Mahasiswa extends REST_Controller
     
     public function index_put($id)
     {
+		$res = [
+			"status_code" => 200,
+			"errors" => null
+		];
 		$data = $this->_put_args;
 		$dataTmp = [
 			"nm_mahasiswa"=>$data['nm_mahasiswa']
 		];
-		if($this->db->where($this->tablePk, $id)->update($this->table, $data)) $this->response(200);
-		else $this->response(500);
+		$formValidation = $this->form_validation;
+		$formValidation->set_data($dataTmp);
+		$formValidation->set_rules('nm_mahasiswa','Nama Mahasiswa','required|max_length[150]');
+		if($formValidation->run() == FALSE){
+			$res['status_code'] = 422;
+			$res['errors'] = $formValidation->error_array();
+			$this->response($res, 422);
+		}else{
+			if($this->db->where($this->tablePk, $id)->update($this->table, $dataTmp)) $this->response($res, 200);
+			else {
+				$res['status_code'] = 500;
+				$this->response(500);
+			}
+		}
     }
         
     function index_delete($id)

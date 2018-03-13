@@ -22,7 +22,7 @@ class Dosen extends REST_Controller
         $this->table = "tbdosen";
         $this->tablePk = "nidn";
         $this->fullTextSearch = 'nidn,nm_dosen';
-        $this->load->form_validation();
+        $this->load->library('form_validation');
     }
     
     function index_get($id = '')
@@ -129,8 +129,8 @@ class Dosen extends REST_Controller
 		];
 		$formValidation = $this->form_validation;
 		$formValidation->set_data($data);
-		$formValidation->set_rules('nobp','NOBP','required|max_length[15]|min_length[14]');
-		$formValidation->set_rules('nm_dosen','Nama Mahasiswa','required|max_length[150]');
+		$formValidation->set_rules('nidn','NOBP','required|max_length[15]|min_length[14]');
+		$formValidation->set_rules('nm_dosen','Nama Dosen','required|max_length[150]');
 		if($formValidation->run() == FALSE){
 			$res['status_code'] = 422;
 			$res['errors'] = $formValidation->error_array();
@@ -146,12 +146,28 @@ class Dosen extends REST_Controller
     
     public function index_put($id)
     {
+		$res = [
+			"status_code" => 200,
+			"errors" => null
+		];
 		$data = $this->_put_args;
 		$dataTmp = [
 			"nm_dosen"=>$data['nm_dosen']
 		];
-		if($this->db->where($this->tablePk, $id)->update($this->table, $data)) $this->response(200);
-		else $this->response(500);
+		$formValidation = $this->form_validation;
+		$formValidation->set_data($dataTmp);
+		$formValidation->set_rules('nm_dosen','Nama Dosen','required|max_length[150]');
+		if($formValidation->run() == FALSE){
+			$res['status_code'] = 422;
+			$res['errors'] = $formValidation->error_array();
+			$this->response($res, 422);
+		}else{
+			if($this->db->where($this->tablePk, $id)->update($this->table, $dataTmp)) $this->response($res, 200);
+			else {
+				$res['status_code'] = 500;
+				$this->response(500);
+			}
+		}
     }
         
     function index_delete($id)

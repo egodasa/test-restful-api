@@ -9,7 +9,7 @@ include "template/sidebar.php";
 	<!-- Content Header (Page header) -->
 	<section class="content-header">
 		<h1>
-			Data Tables
+			Data Tablesssssss
 			<small>advanced tables</small>
 		</h1>
 	</section>
@@ -24,17 +24,10 @@ include "template/sidebar.php";
 						<button type="button" class="btn btn-primary btn-sm" @click="toggleFormModal">
 							<span class="glyphicon glyphicon-plus"></span> Data Baru
 						</button>
-						<div class="modal fade in" id="formDosen" :style="formModal.style">
-				          <div class="modal-dialog">
-				            <div class="modal-content">
-				              <div class="modal-header">
-				                <button type="button" class="close" @click="toggleFormModal">
-				                  <span aria-hidden="true">×</span></button>
-				                <h4 class="modal-title">Default Modal</h4>
-				              </div>
-				              <div class="modal-body">
-				                <form @submit.prevent="saveData(model)">
-								<vue-form-generator @validated="onValidated()" :schema="schema" :model="model" :options="formOptions"></vue-form-generator>
+						<modalbs :show="formModal.status" title="Mahasiswa">
+							<template slot="modalBody">
+								<form @submit.prevent="saveData(model)">
+									<form-generator :fields="schema.fields" :model="model" :error="error"></form-generator>
 								<div class="row">
 									<div class="col-lg-6 col-md-6 col-sm-12">
 										<div class="pull-left">
@@ -50,15 +43,8 @@ include "template/sidebar.php";
 									</div>
 								  </div>
 								</form>
-				              </div>
-				              <div class="modal-footer">
-								
-				              </div>
-				            </div>
-				            <!-- /.modal-content -->
-				          </div>
-				          <!-- /.modal-dialog -->
-				        </div>
+							</template>
+						</modalbs>
 					</div>
 					
 					<div class="box-body">
@@ -130,6 +116,10 @@ include "template/sidebar.php";
 	</section>
 	<!-- /.content -->
 </div>
+<?php
+require "components/modalBS.php";
+require "components/formGenerator.php";
+?>
 <script>
 <?php
 require "template/mixin.php";
@@ -161,6 +151,12 @@ new Vue({
 			model : {
 				nobp : null,
 				nm_mahasiswa : null
+			//	id_jk : null
+			},
+			error : {
+				nobp : ' ',
+				nm_mahasiswa : ' '
+			//	id_jk : ' '
 			},
 			schema : {
 				fields : [
@@ -168,18 +164,28 @@ new Vue({
 						type : "input",
 						label : "NOBP",
 						inputType : "text",
-						model : "nobp",
+						name : "nobp",
 						required : true,
 						max : 15
 					},
 					{
-						type : "input",
+						type : "textarea",
 						label : "Nama Mahasiswa",
 						inputType : "text",
-						model : "nm_mahasiswa",
+						name : "nm_mahasiswa",
 						required : true,
 						max : 150
 					}
+				/*	{
+						type : "select",
+						label : "Jenis Kelamin",
+						name : "id_jk",
+						optionLabel : "nm_jk",
+						option : [
+							{id_jk : 1, nm_jk : "Laki-laki"},
+							{id_jk : 2, nm_jk : "Perempuan"}
+						]
+					} */
 				]
 			}
 		}

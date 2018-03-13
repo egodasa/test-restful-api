@@ -46,6 +46,12 @@ let btTable = {
 		}
 	},
 	methods: {
+		resetError (){
+			let errorList = Object.keys(this.error)
+			for(x=0; x<errorList.length; x++){
+				this.error[errorList[x]] = null
+			}
+		},
 		refreshTable (){
 			this.$refs.vuetable.refresh()
 		},
@@ -57,6 +63,7 @@ let btTable = {
 			for(x=0;x<field.length;x++){
 				this.model[field[x]] = null
 			}
+			this.resetError()
 		},
 		onValidated(isValid, errors) {
 		   console.log("Validation result: ", isValid, ", Errors:", errors);
@@ -64,7 +71,6 @@ let btTable = {
 		toggleFormModal (){
 			this.resetForm()
 			this.formModal.status = !this.formModal.status
-			this.formModal.status ? this.formModal.style = 'display:block;' : this.formModal.style = 'display:none;'
 		},
 		onChangePage(page) {
 			this.$refs.vuetable.changePage(page)
@@ -97,7 +103,9 @@ let btTable = {
 					this.toggleFormModal()
 				})
 				.catch(err=>{
-					this.formModal.pesan = "Telah terjadi kesalahan pada server. Silahkan coba lagi nanti."
+					this.resetError()
+					let error = err.response.data
+					if(error.status_code == 422) this.error = error.errors
 				})
 		},
 		deleteData(x){
